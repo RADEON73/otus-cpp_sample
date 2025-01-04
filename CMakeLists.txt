@@ -63,9 +63,7 @@ if(TEST_GOOGLE)
 	
     target_link_libraries(google_test_version PRIVATE 
 	GTest::gtest 
-	GTest::gtest_main 
-	#GTest::gmock 
-	#GTest::gmock_main
+	GTest::gtest_main
 	)
 	target_link_libraries(google_test_version PUBLIC 
 	helloworld
