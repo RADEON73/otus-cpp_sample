@@ -1,35 +1,37 @@
 cmake_minimum_required(VERSION 3.12)
 
 set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
-set(PROJECT_VESRION 0.0.${PATCH_VERSION})
+set(PROJECT_VERSION 0.0.${PATCH_VERSION})
 #set(CMAKE_TOOLCHAIN_FILE E:/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-project(helloworld VERSION ${PROJECT_VESRION})
+project(HelloWorld VERSION ${PROJECT_VERSION})
 
 option(TEST_BOOST "Whether to build Boost test" ON)
 option(TEST_GOOGLE "Whether to build Google test" ON)
 
-configure_file(version.h.in version.h)
-
-add_executable(helloworld_cli main.cpp)
-add_library(helloworld lib.cpp)
-
-set_target_properties(helloworld_cli helloworld PROPERTIES
-    CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED ON
+configure_file(
+	version.h.in 
+	${CMAKE_CURRENT_BINARY_DIR}/version.h
 )
 
-target_include_directories(helloworld
-    PRIVATE "${CMAKE_BINARY_DIR}"
+include_directories(HelloWorld PRIVATE
+	${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(helloworld_cli PRIVATE
-    helloworld
-)
+add_subdirectory(lib)
+add_subdirectory(src)
+
+#if(TEST_BOOST)
+#	add_subdirectory(tests/boost_test)
+#endif()
+
+#if(TEST_GOOGLE)
+#	add_subdirectory(tests/google_test)
+#endif()
 
 if(TEST_BOOST)
     find_package(Boost COMPONENTS unit_test_framework REQUIRED)
-    add_executable(boost_test_version boost_test_version.cpp)
+    add_executable(boost_test_version tests/boost_test/boost_test_version.cpp)
 
     set_target_properties(boost_test_version PROPERTIES
         CXX_STANDARD 14
@@ -43,8 +45,14 @@ if(TEST_BOOST)
 
     target_link_libraries(boost_test_version
         ${Boost_LIBRARIES}
-        helloworld
+        lib
     )
+	
+	target_include_directories(boost_test_version PRIVATE
+		${CMAKE_SOURCE_DIR}/lib
+	)
+	enable_testing()
+    add_test(boost_test_version boost_test_version)
 endif()
 
 if(TEST_GOOGLE)
@@ -54,7 +62,7 @@ if(TEST_GOOGLE)
 	endif()
 	
 	find_package(GTest CONFIG REQUIRED)
-	add_executable(google_test_version google_test_version.cpp)
+	add_executable(google_test_version tests/google_test/google_test_version.cpp)
 	
 	set_target_properties(google_test_version PROPERTIES
         CXX_STANDARD 14
@@ -66,47 +74,17 @@ if(TEST_GOOGLE)
 	GTest::gtest_main
 	)
 	target_link_libraries(google_test_version PUBLIC 
-	helloworld
+	lib
 	)
+	target_include_directories(google_test_version PRIVATE
+	${CMAKE_SOURCE_DIR}/lib
+	)
+	enable_testing()
+	add_test(google_test_version google_test_version)
 endif()
 
-if (MSVC)
-    target_compile_options(helloworld_cli PRIVATE
-        /W4
-    )
-    target_compile_options(helloworld PRIVATE
-        /W4
-    )
-    if(TEST_BOOST)
-        target_compile_options(boost_test_version PRIVATE
-            /W4
-        )
-    endif()
-	if(TEST_GOOGLE)
-        target_compile_options(google_test_version PRIVATE
-            /W4
-        )
-    endif()
-else ()
-    target_compile_options(helloworld_cli PRIVATE
-        -Wall -Wextra -pedantic -Werror
-    )
-    target_compile_options(helloworld PRIVATE
-        -Wall -Wextra -pedantic -Werror
-    )
-    if(TEST_BOOST)
-        target_compile_options(boost_test_version PRIVATE
-            -Wall -Wextra -pedantic -Werror
-        )
-    endif()
-	if(TEST_GOOGLE)
-        target_compile_options(google_test_version PRIVATE
-            -Wall -Wextra -pedantic -Werror
-        )
-    endif()
-endif()
-
-install(TARGETS helloworld_cli RUNTIME DESTINATION bin)
+#Запаковка релиза
+install(TARGETS console RUNTIME DESTINATION bin)
 
 set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
@@ -114,13 +92,3 @@ set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
 set(CPACK_PACKAGE_CONTACT example@example.com)
 include(CPack)
-
-if(TEST_BOOST)
-    enable_testing()
-    add_test(boost_test_version boost_test_version)
-endif()
-
-if(TEST_GOOGLE)
-    enable_testing()
-	add_test(google_test_version google_test_version)
-endif()
