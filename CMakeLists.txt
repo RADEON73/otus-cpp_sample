@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.12)
 
 set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
 set(PROJECT_VERSION 0.0.${PATCH_VERSION})
-#set(CMAKE_TOOLCHAIN_FILE E:/vcpkg/scripts/buildsystems/vcpkg.cmake)
+
+if (DEFINED ENV{USE_VCPKG_TOOLCHAIN} AND $ENV{USE_VCPKG_TOOLCHAIN} STREQUAL "1")
+    set(CMAKE_TOOLCHAIN_FILE "E:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+endif()
 
 project(HelloWorld VERSION ${PROJECT_VERSION})
 
